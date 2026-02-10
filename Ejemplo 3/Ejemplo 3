@@ -1,0 +1,16 @@
+.data
+A: .word 34, 5, 63, 8, 14, 45, 6, 57, 38
+
+# A[6] = A[4] + 10	
+.text
+	la t0, A # t0 = dir A[0]
+	lw s0, 16(t0) # s0 = 14 contenido de A[4}
+	addi s0, s0, 20 # s0 = 14 + 20 = 34
+	sw s0, 24(t0) # A[6] = 34
+end:
+	j end
+		
+		
+		
+		
+		
