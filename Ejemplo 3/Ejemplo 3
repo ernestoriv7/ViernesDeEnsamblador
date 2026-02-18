@@ -1,7 +1,7 @@
 .data
 A: .word 34, 5, 63, 8, 14, 45, 6, 57, 38
 
-# A[6] = A[4] + 10	
+# A[6] = A[4] + 20	
 .text
 	la t0, A # t0 = dir A[0]
 	lw s0, 16(t0) # s0 = 14 contenido de A[4}
