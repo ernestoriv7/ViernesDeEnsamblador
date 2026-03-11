@@ -1,0 +1,11 @@
+.data
+color_blanco: .word 0x00FFFFFF #Blanco(R=FF, G=FF, B=FF)
+
+.text 
+
+lw t0, color_blanco
+sw t0, 0(gp)
+sw t0, 4(gp)
+
+end:
+	j  end
