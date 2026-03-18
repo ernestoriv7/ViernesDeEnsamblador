@@ -1,0 +1,26 @@
+.data
+color_blanco: .word 0x00FFFFFF #Blanco(R=FF, G=FF, B=FF)
+color_rojo: .word 0x00FF0000 #Rojo(R=FF, G=00, B=00)
+color_verde: .word 0x0000FF00 #Verde(R=00, G=FF, B=00)
+color_azul: .word 0x000000FF #Azul(R=00, G=00, B=FF)
+
+.text  		#Resolución pantalla es de 64x64					
+	lw t0, color_blanco  #Total 4096 pixeles
+	lw t1, color_rojo
+	lw t2, color_verde
+	lw t3, color_azul	
+	mv s0, gp
+	li t4, 1024
+	slli t4, t4, 4
+	add a0, s0, t4
+	
+	ciclo:
+	 sw t0, 0(s0)
+	 sw t1, 4(s0)
+	 sw t2, 8(s0)
+	 sw t3, 12(s0)
+	 addi s0, s0, 16
+	 bne s0, a0, ciclo
+	 
+end:
+	j  end
