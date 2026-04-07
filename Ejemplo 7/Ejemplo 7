@@ -1,0 +1,31 @@
+.data
+color_blanco: .word 0x00FFFFFF #Blanco(R=FF, G=FF, B=FF)
+color_rojo: .word 0x00FF0000 #Rojo(R=FF, G=00, B=00)
+color_verde: .word 0x0000FF00 #Verde(R=00, G=FF, B=00)
+color_azul: .word 0x000000FF #Azul(R=00, G=00, B=FF)
+
+.text
+	li a0, 32 # x = 32
+	li a1, 32 # y = 32
+	lw a2, color_rojo
+	jal draw_point
+	
+end:
+	j  end
+
+# Function: Pintar_Pixel
+# Parámetros:
+#	a0: Coordenada x
+#	a1: Coordenada y
+#	a2: Color
+# Return
+#	void
+draw_point:
+	li t0, 6 # Por el tamaño de la pantalla
+	sll t0, a1, t0 # Se debe multiplicar y por 64 
+	add t1, a0, t0 # Correspondiente  al largo de la pantalla
+	li t0, 2
+	sll t1, t1, t0 # Se multiplica la coordenada restante por 4
+	add t1, t1, gp # Debido a que la memoria se avanza en bytes
+	sw a2, (t1)
+	jr ra
