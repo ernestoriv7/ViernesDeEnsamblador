@@ -1,0 +1,96 @@
+.eqv KEY_INPUT_ADDRESS 0xFFFF0004
+.eqv KEY_STATUS_ADDRESS 0xFFFF0000
+# Para referencia revisar https://www.it.uu.se/education/course/homepage/os/vt18/module-1/memory-mapped-io/
+
+# Caracteres ASCII
+.eqv ASCII_W 119
+.eqv ASCII_S 115
+.eqv ASCII_A 97
+.eqv ASCII_D 100
+
+.data
+color_blanco: .word 0x00FFFFFF #Blanco(R=FF, G=FF, B=FF)
+color_negro: .word 0x00000000 #Negro(R=00, G=00, B=00)
+pixel_x: .word 32
+pixel_y: .word 32
+
+.text
+main:
+	.espera:
+	# Revisar si se presionó una tecla
+	lw t1, KEY_STATUS_ADDRESS
+	blez t1, .espera
+	
+	jal mover_pixel
+	sw zero, KEY_STATUS_ADDRESS, t1 # Limpiar estado del teclado
+end:
+	j  main
+
+# Función: adjust_dir
+# Parametros:
+#	Ninguno
+# Retorno:
+#	Void
+mover_pixel:
+	addi sp, sp -4
+	sw ra, 0(sp)
+	lw a0, pixel_x 
+	lw a1, pixel_y
+	lw a2, color_negro
+	jal pintar_pixel
+	
+	lw t0, KEY_INPUT_ADDRESS
+	
+	.mover_arriba:
+		li t1, ASCII_W
+		bne t0, t1, .mover_abajo
+		addi a1, a1, -1 #Mover arriba
+		j .mover_pixel_final
+	
+	.mover_abajo:
+		li t1, ASCII_S
+		bne t0, t1, .mover_izquierda
+		addi a1, a1, 1 #Mover abajo
+		j .mover_pixel_final
+		
+	.mover_izquierda:
+		li t1, ASCII_A
+		bne t0, t1, .mover_derecha
+		addi a0, a0, -1 #Mover izquierda
+		j .mover_pixel_final
+		
+	.mover_derecha:
+		li t1, ASCII_D
+		bne t0, t1, .mover_pixel_final
+		addi a0, a0, 1 #Mover derecha
+		j .mover_pixel_final
+		
+	.mover_pixel_final:
+	lw a2, color_blanco
+	jal pintar_pixel
+	sw a0, pixel_x, t1
+	sw a1, pixel_y, t1
+	lw ra, 0(sp)
+	addi sp, sp, 4
+	jr ra
+
+# Function: Pintar_Pixel
+# Parámetros:
+#	a0: Coordenada x
+#	a1: Coordenada y
+#	a2: Color
+# Return
+#	void
+pintar_pixel:
+	addi sp, sp -4
+	sw ra, 0(sp)
+	li t0, 6 # Por el tamaño de la pantalla
+	sll t0, a1, t0 # Se debe multiplicar y por 64 
+	add t1, a0, t0 # Correspondiente  al largo de la pantalla
+	li t0, 2
+	sll t1, t1, t0 # Se multiplica la coordenada restante por 4
+	add t1, t1, gp # Debido a que la memoria se avanza en bytes
+	sw a2, (t1)
+	lw ra, 0(sp)
+	addi sp, sp, 4
+	jr ra
