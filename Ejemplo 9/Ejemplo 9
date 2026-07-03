@@ -1,0 +1,232 @@
+.eqv KEY_INPUT_ADDRESS 0xFFFF0004
+.eqv KEY_STATUS_ADDRESS 0xFFFF0000
+# Para referencia revisar https://www.it.uu.se/education/course/homepage/os/vt18/module-1/memory-mapped-io/
+
+# Caracteres ASCII
+.eqv ASCII_W 119
+.eqv ASCII_S 115
+.eqv ASCII_A 97
+.eqv ASCII_D 100
+
+.eqv LETRA_E_X, 12
+.eqv LETRA_E_Y, 16
+.eqv LETRA_E_H, 4
+
+.eqv COLOR_BLANCO 0x00FFFFFF #Blanco(R=FF, G=FF, B=FF)
+.eqv COLOR_NEGRO 0x00000000 #Negro(R=00, G=00, B=00)
+.eqv COLOR_ROJO 0x00FF0000 #Rojo(R=FF, G=00, B=00)
+.data
+#color_blanco: .word 0x00FFFFFF #Blanco(R=FF, G=FF, B=FF)
+#color_negro: .word 0x00000000 #Negro(R=00, G=00, B=00)
+pixel_x: .word 32
+pixel_y: .word 32
+
+.text
+main:
+	li a0, LETRA_E_X
+	li a1, LETRA_E_Y
+	li a2, COLOR_ROJO
+	li a3, LETRA_E_H
+	
+	jal pintar_letra_e
+	
+	.espera:
+	# Revisar si se presionó una tecla
+	lw t1, KEY_STATUS_ADDRESS
+	beqz t1, .espera
+	
+	jal mover_pixel
+	sw zero, KEY_STATUS_ADDRESS, t1 # Limpiar estado del teclado
+end:
+	j  main
+
+# Función: mover_pixel
+# Parametros:
+#	Ninguno
+# Retorno:
+#	Void
+mover_pixel:
+	addi sp, sp -4
+	sw ra, 0(sp)
+	
+	lw a0, pixel_x 
+	lw a1, pixel_y
+	li a2, COLOR_NEGRO
+	jal pintar_pixel
+	
+	lw t0, KEY_INPUT_ADDRESS
+	
+	.mover_arriba:
+		li t1, ASCII_W
+		bne t0, t1, .mover_abajo
+		addi a1, a1, -1 #Mover arriba
+		j .mover_pixel_final
+	
+	.mover_abajo:
+		li t1, ASCII_S
+		bne t0, t1, .mover_izquierda
+		addi a1, a1, 1 #Mover abajo
+		j .mover_pixel_final
+		
+	.mover_izquierda:
+		li t1, ASCII_A
+		bne t0, t1, .mover_derecha
+		addi a0, a0, -1 #Mover izquierda
+		j .mover_pixel_final
+		
+	.mover_derecha:
+		li t1, ASCII_D
+		bne t0, t1, .mover_pixel_final
+		addi a0, a0, 1 #Mover derecha
+		j .mover_pixel_final
+		
+	.mover_pixel_final:
+	li a2, COLOR_BLANCO
+	jal pintar_pixel
+	sw a0, pixel_x, t1
+	sw a1, pixel_y, t1
+	
+	lw ra, 0(sp)
+	addi sp, sp, 4
+	jr ra
+
+# Function: Pintar_Pixel
+# Parámetros:
+#	a0: Coordenada x
+#	a1: Coordenada y
+#	a2: Color
+# Return
+#	void
+pintar_pixel:
+	addi sp, sp -4
+	sw ra, 0(sp)
+	li t0, 6 # Por el tamaño de la pantalla
+	sll t0, a1, t0 # Se debe multiplicar y por 64 
+	add t1, a0, t0 # Correspondiente  al largo de la pantalla
+	li t0, 2
+	sll t1, t1, t0 # Se multiplica la coordenada restante por 4
+	add t1, t1, gp # Debido a que la memoria se avanza en bytes
+	sw a2, (t1)
+	lw ra, 0(sp)
+	addi sp, sp, 4
+	jr ra
+	
+# Function: pintar_linea_horizontal
+# Parametros:
+#	a0: x
+#	a1: y
+#	a2: color
+#	a3: w
+# Return
+#	void
+pintar_linea_horizontal:
+	
+	addi sp, sp, -16
+	sw ra, 0(sp)
+	sw s0, 4(sp)
+	sw s1, 8(sp)
+	sw s2, 12(sp)
+	
+	mv s1, a0
+	li s2, 0
+	
+	.h_loop:
+		add a0, s1, s0
+		jal pintar_pixel
+		addi s0, s0, -1
+		
+		bge s0, s2, .h_loop
+	
+	lw ra, 0(sp)
+	lw s0, 4(sp)
+	lw s1, 8(sp)
+	lw s2, 12(sp)
+	addi sp, sp, 16	
+	
+	jr ra
+
+# Function: pintar_linea_vertical
+# Parameters:
+#	a0: x
+#	a1: y
+#	a2: color
+#	a3: h
+# Return
+#	void
+pintar_linea_vertical:
+		
+	addi sp, sp, -16
+	sw ra, 0(sp)
+	sw s0, 4(sp)
+	sw s1, 8(sp)
+	sw s2, 12(sp)
+	
+	mv s0, a3
+	mv s1, a1
+	li s2, 0
+	
+	.v_loop:
+		add a1, s1, s0
+		jal pintar_pixel
+		addi s0, s0, -1
+		
+		bge s0, s2, .v_loop
+	
+	lw ra, 0(sp)
+	lw s0, 4(sp)
+	lw s1, 8(sp)
+	lw s2, 12(sp)
+	addi sp, sp, 16	
+	
+	jr ra
+
+# Function: pintar_letra_e
+# Parameters:
+#	a0: x
+#	a1: y
+#	a2: color
+#	a3: h
+# Return
+#	void
+pintar_letra_e:			
+	addi sp, sp -20
+	sw ra, 0(sp)
+	sw s0, 4(sp)
+	sw s1, 8(sp)
+	sw s2, 12(sp)
+	sw s3, 16(sp)
+	
+	mv s0, a0
+	mv s1, a1
+	mv s2, a2
+	mv s3, a3
+
+	jal pintar_linea_vertical
+	
+	mv a0, s0
+	addi a0, a0, 1
+	mv a1, s1
+	mv a2, s2
+	jal pintar_pixel
+	
+	mv a0, s0
+	addi a0, a0, 1
+	mv a1, s1
+	addi a1, a1, 2
+	mv a2, s2
+	jal pintar_pixel
+	
+	mv a0, s0
+	addi a0, a0, 1
+	mv a1, s1
+	addi a1, a1, 4
+	mv a2, s2
+	jal pintar_pixel
+	
+	lw ra, 0(sp)
+	lw s0, 4(sp)
+	lw s1, 8(sp)
+	lw s2, 12(sp)
+	lw s3, 16(sp)
+	addi sp, sp, 20
+	jr ra
