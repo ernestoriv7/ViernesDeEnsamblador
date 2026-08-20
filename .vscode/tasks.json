@@ -1,0 +1,34 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run RARS",
+            "type": "shell",
+            "command": "java",
+            "args": [
+                "-jar",
+                "${workspaceFolder}/rars1_6.jar",
+                "${file}"
+            ]
+        },
+        {
+            "label": "Open RARS GUI",
+            "type": "shell",
+            "command": "java",
+            "args": [
+                "-jar",
+                "${workspaceFolder}/rars1_6.jar"
+            ]
+        },
+        {
+    "label": "Run Current File",
+    "type": "shell",
+    "command": "java",
+    "args": [
+        "-jar",
+        "${workspaceFolder}/rars1_6.jar",
+        "${file}"
+        ]
+        }
+    ]
+}
