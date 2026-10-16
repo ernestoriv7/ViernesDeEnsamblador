@@ -149,6 +149,77 @@ java -jar .\rars1_6.jar nc a ae1 .\Ejemplo_17\Ejemplo_17.asm
 
 ---
 
+## Battle City: Ejemplo 18 — el primer enemigo
+
+[Ejemplo_18.asm](Ejemplo_18/Ejemplo_18.asm) retoma el nivel 1 del ejemplo
+anterior, añade el **primer tanque enemigo** y reorganiza todo el programa
+en tres capas para poder explicarlo por partes en videos cortos.
+
+Configura el **Bitmap Display** (unidades de 8×8, pantalla de 64×64, base
+`gp`) y el **Keyboard and Display MMIO Simulator** antes de ejecutar.
+
+- **W, A, S, D**: mantener para mover y orientar el tanque azul.
+  **Espacio**: disparar. Cada evento del auto-repeat avanza dos píxeles; al
+  soltar la tecla dejan de llegar eventos y el tanque se detiene.
+- El enemigo (blanco con cañón rojo) aparece en la esquina superior
+  izquierda, patrulla el nivel con rumbo aleatorio y dispara solo.
+- Cada bando tiene un único proyectil en vuelo; avanza 2 píxeles por cuadro.
+- Un impacto en ladrillo abre un boquete de 5×2 perpendicular al disparo;
+  el acero detiene la bala y el agua la deja pasar.
+- Una bala enemiga hace reaparecer al jugador en su posición inicial. Cuando
+  una bala alcanza al enemigo, este desaparece. Solo perder la base termina
+  la partida.
+
+### Las tres capas
+
+1. **Modelo.** `mapa_terreno` guarda un color por píxel del escenario;
+   `tanque_jugador` y `tanque_enemigo` son dos registros con el mismo formato
+   de campos (`T_X`, `T_Y`, `T_DIR`, `T_VIVO`, colores y temporizadores), y
+   `bala_jugador` / `bala_enemigo` usan el formato `B_*`.
+2. **Lógica.** `procesar_entrada`, `actualizar_enemigo` y `actualizar_balas`
+   solo leen y modifican el modelo; nunca tocan la pantalla.
+3. **Vista.** `dibujar_escena` reconstruye el cuadro completo en
+   `buffer_frame`: copia el terreno y encima dibuja tanques y balas. Solo
+   después presenta el resultado en `gp`, por lo que nunca se muestra un
+   cuadro intermedio sin sprites.
+
+```text
+construir escenario
+repetir cada cuadro (16 ms):
+    procesar entrada del jugador
+    actualizar enemigo (reloj de movimiento y reloj de disparo)
+    avanzar las balas píxel a píxel
+    dibujar la escena
+hasta que la partida termine
+```
+
+### Detalles útiles para explicarlo
+
+- **Tablas en vez de cadenas de `if`.** `direccion_dx` / `direccion_dy`
+  convierten una dirección en un desplazamiento, y `canon_sprite` /
+  `orugas_sprite` describen el sprite de 5×5 sin una sola comparación.
+- **Un mismo dibujante, tres lienzos.** `escribir_pixel` y `rellenar_rect`
+  reciben la dirección base del lienzo: `mapa_terreno` para el modelo,
+  `buffer_frame` para componer el cuadro y `gp` para la pantalla visible.
+  La dirección de un píxel siempre es `base + (y * 64 + x) * 4`.
+- **Funciones con punteros.** `mover_tanque`, `disparar` y `actualizar_bala`
+  reciben un puntero al registro de la entidad, así que el mismo código vale
+  para el jugador y para el enemigo.
+- **IA del enemigo.** Dos contadores decrecientes: uno marca cuándo avanzar
+  y otro cuándo disparar. Si queda bloqueado —o con una probabilidad
+  pequeña— elige una dirección nueva con el servicio 42 de RARS.
+- **Pantalla rápida y sin parpadeo.** El escenario se copia completo a
+  `buffer_frame` solo al iniciar. Después se restauran y presentan únicamente
+  los pequeños rectángulos ocupados por los sprites anteriores y actuales.
+
+Para comprobar el ensamblado desde la raíz, sin abrir herramientas gráficas:
+
+```powershell
+java -jar .\rars1_6.jar nc a ae1 .\Ejemplo_18\Ejemplo_18.asm
+```
+
+---
+
 
 ## 🧩 ¿A quién va dirigido?
 
